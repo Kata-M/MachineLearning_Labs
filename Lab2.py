@@ -1,4 +1,8 @@
 import numpy as np
+import random as rand
+import math as math
+from scipy.optimize import minimize
+import matplotlib.pyplot as plt
 
 def kernel(xVector,yVector):
 #linear kernel function for
@@ -13,6 +17,11 @@ def zerofun(a,t):
       return True
   else:
       return False
+
+#minimize function call here
+#ret =minimize(objective,start,bounds=B,constrains=XC)
+#alpha = ret['x']
+#print(alpha)
 
 
 #test kernel function
