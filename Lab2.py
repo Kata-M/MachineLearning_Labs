@@ -24,7 +24,7 @@ def objective(alpha_array):
     return sum
 
 #test objective
-print("test objective :", objective(alpha))
+#print("test objective :", objective(alpha))
 
 
 def pre_compute_matrix_p():
@@ -109,14 +109,21 @@ print("polynimial kernel function returns :", polynomial_kernel(x,y,2))
 
 
 
-def zerofun(a,t):
+def zerofun(a,t,C):
 #implements equality constrain of function (10)
 #in lab2 instructions
-  result = np.dot(a,t)
-  if(result == 0):
-      return True
-  else:
-      return False
+
+    dot_product = np.dot(a,t)
+    if(dot_product == 0 ):
+        for i in range(len(a)):
+            if(a[i]>C):
+                return False
+            if(a[i]<0):
+              return False
+        return True
+    else:
+        return False
+
 
 
 def calculate_b(alpha,t_i, s_vec, x_vec, t_s, slack, C):
@@ -153,6 +160,6 @@ pre_compute_matrix_p()
 
 
 #test zerofun
-print("zerofun returns :",zerofun(x,y))
+print("zerofun returns :",zerofun(x,y,8))
 
 
