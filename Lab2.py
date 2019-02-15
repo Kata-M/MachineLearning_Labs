@@ -37,11 +37,49 @@ def compute_sum(alpha_array):
     return resulted_matrix
 
 
+def extract_non_zero_alpha_positions(alpha_array):
+
+    non_zero_positions = []
+    threshold = 10 ^ (-5)
+
+    for i in range(len(alpha_array)):
+        if alpha_array[i] > threshold:
+            non_zero_positions.append(i)
+
+    return non_zero_positions
+
+
+def extract_non_zero_alphas(alpha_array, t_array, x_datapoints):
+    non_zero_positions = extract_non_zero_alpha_positions(alpha_array)
+
+    non_zero_alphas = []
+
+    for i in range(len(non_zero_positions)):
+        non_zero_alphas.append([alpha_array[i], t_array[i], x_datapoints[i]])
+
+    return non_zero_alphas
+
+
+def indication_function(non_zero_alphas, b_value, s):
+    indicator_val = 0
+
+    for i in range(len(non_zero_alphas)):
+        alpha = non_zero_alphas[i][0]
+        t_val = non_zero_alphas[i][1]
+        x_val = non_zero_alphas[i][2]
+        indicator_val += alpha*t_val*kernel(x_val, s)
+
+    indicator_val -= b_value
+
+    return indicator_val
+
+
 def kernel(x_vector, y_vector):
 
     # linear kernel function for
     scalar = np.dot(x_vector, y_vector)
     return scalar
+
 
 def zerofun(a,t):
 #implements equality constrain of function (10)
