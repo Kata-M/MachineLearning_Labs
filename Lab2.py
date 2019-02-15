@@ -23,6 +23,9 @@ def objective(alpha_array):
     sum = 1/2 * compute_sum(alpha_array) - sum_of_alpha
     return sum
 
+#test objective
+print("test objective :", objective(alpha))
+
 
 def pre_compute_matrix_p():
 
@@ -30,7 +33,7 @@ def pre_compute_matrix_p():
 
     for i in range(t_array.size):
         for j in range(t_array.size):
-            matrix_p[i][j] *= kernel(x_datapoints[i], x_datapoints[j])
+            matrix_p[i][j] *= linear_kernel(x_datapoints[i], x_datapoints[j])
 
 
 def compute_sum(alpha_array):
@@ -75,18 +78,35 @@ def indication_function(non_zero_alphas, b_value, s):
         alpha = non_zero_alphas[i][0]
         t_val = non_zero_alphas[i][1]
         x_val = non_zero_alphas[i][2]
-        indicator_val += alpha*t_val*kernel(x_val, s)
+        indicator_val += alpha * t_val * linear_kernel(x_val, s)
 
     indicator_val -= b_value
 
     return indicator_val
 
 
-def kernel(x_vector, y_vector):
-
+def linear_kernel(x_vector, y_vector):
     # linear kernel function for
     scalar = np.dot(x_vector, y_vector)
     return scalar
+
+
+def polynomial_kernel(x_vector, y_vector,p):
+    # linear kernel function for
+    scalar = pow((np.dot(x_vector, y_vector) +1 ),p)
+    print("test pow",pow(2,2))
+    return scalar
+
+#TODO radial basis function kernel (RBF)
+
+#test kernel functions
+y = np.array([5, 3 , 1])
+x = np.array([4, 2 , 6])
+linear_kernel(x, y)
+print("linear kernel function returns :", linear_kernel(x, y))
+
+print("polynimial kernel function returns :", polynomial_kernel(x,y,2))
+
 
 
 def zerofun(a,t):
@@ -107,7 +127,7 @@ def calculate_b(alpha,t_i, s_vec, x_vec, t_s, slack, C):
         result = 0
         for i in range(len(x_datapoints)):
             if(0<alpha[i]<C):
-                result += alpha[i] * t_i[i] * kernel(s_vec, x_vec)
+                result += alpha[i] * t_i[i] * linear_kernel(s_vec, x_vec)
             else:
                 print("alpha value is not acceptable")
 
@@ -117,7 +137,7 @@ def calculate_b(alpha,t_i, s_vec, x_vec, t_s, slack, C):
     else:
         result = 0
         for i in range(len(x_datapoints)):
-                result += alpha[i] * t_i[i] * kernel(s_vec, x_vec)
+                result += alpha[i] * t_i[i] * linear_kernel(s_vec, x_vec)
 
         result = result - t_s
         print("result of calculate_b (no slack variables used):", result)
@@ -131,12 +151,6 @@ calculate_b(alpha,t_array,s_vec,x_datapoints,t_s, True ,1)
 #pre-compute matrix P (call the function only once at the beginning)
 pre_compute_matrix_p()
 
-
-#test kernel function
-y = np.array([0, 2, 0])
-x = np.array([2, 0, 4])
-kernel(x,y)
-print("kernel function returns :",kernel(x,y))
 
 #test zerofun
 print("zerofun returns :",zerofun(x,y))
