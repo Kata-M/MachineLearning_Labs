@@ -3,8 +3,16 @@ import numpy as np
 # datapoints user for training and test
 x_datapoints = np.array([1,2,3])
 
+#alpha
+alpha = np.array([1,2,1])
+#support vector
+s_vec = np.array([0,2,0])
+#target of support vector
+t_s = 1
+
+
 # TODO: find how to compute t_array
-t_array = np.array([1,2,3])
+t_array = np.array([-1,1,-1])
 
 matrix_p = np.matrix([[]])
 
@@ -90,6 +98,36 @@ def zerofun(a,t):
   else:
       return False
 
+
+def calculate_b(alpha,t_i, s_vec, x_vec, t_s, slack, C):
+#compute b according to sum (ai ti K(s,xi) -ts
+#slack is boolean, true if slack is used, false otherwise
+
+    if(slack):
+        result = 0
+        for i in range(len(x_datapoints)):
+            if(0<alpha[i]<C):
+                result += alpha[i] * t_i[i] * kernel(s_vec, x_vec)
+            else:
+                print("alpha value is not acceptable")
+
+        result = result - t_s
+        print("result of calculate_b (slack variables used):", result)
+        return result
+    else:
+        result = 0
+        for i in range(len(x_datapoints)):
+                result += alpha[i] * t_i[i] * kernel(s_vec, x_vec)
+
+        result = result - t_s
+        print("result of calculate_b (no slack variables used):", result)
+
+        return result
+
+
+#test calculate_b
+calculate_b(alpha,t_array,s_vec,x_datapoints,t_s, True ,1)
+
 #pre-compute matrix P (call the function only once at the beginning)
 pre_compute_matrix_p()
 
@@ -98,8 +136,9 @@ pre_compute_matrix_p()
 y = np.array([0, 2, 0])
 x = np.array([2, 0, 4])
 kernel(x,y)
-
 print("kernel function returns :",kernel(x,y))
 
 #test zerofun
 print("zerofun returns :",zerofun(x,y))
+
+
