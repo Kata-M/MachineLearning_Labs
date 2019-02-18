@@ -22,28 +22,23 @@ def objective(alpha_array):
     return sum_dual_formulation
 
 
-def pre_compute_matrix_p():
+def precompute_matrix_p():
 
     global matrix_p
     matrix_p = np.outer(t_array, t_array)
 
     for i in range(t_array.size):
         for j in range(t_array.size):
-            matrix_p[i][j] *= linear_kernel(data_points[i], data_points[j])
+            matrix_p[i][j] *= kernel(data_points[i], data_points[j])
 
 
 def extract_non_zero_alpha_positions(alpha_array):
 
     non_zero_positions = []
-    threshold = pow(10, -5)
-
-
 
     for i in range(len(alpha_array)):
         if alpha_array[i] > threshold:
             non_zero_positions.append(i)
-
-    print(len(non_zero_positions))
 
     return non_zero_positions
 
@@ -51,14 +46,14 @@ def extract_non_zero_alpha_positions(alpha_array):
 def extract_non_zero_alphas(alpha_array):
     non_zero_positions = extract_non_zero_alpha_positions(alpha_array)
 
+    global non_zero_alphas
+
     non_zero_alphas = []
 
     for i in range(len(non_zero_positions)):
         non_zero_alphas.append([alpha_array[non_zero_positions[i]],
                                 t_array[non_zero_positions[i]],
                                 data_points[non_zero_positions[i]]])
-
-    print(len(non_zero_alphas))
 
     return non_zero_alphas
 
@@ -70,22 +65,42 @@ def indicator_function(non_zero_alphas, b_value, s):
         alpha = non_zero_alphas[i][0]
         t_val = non_zero_alphas[i][1]
         x_val = non_zero_alphas[i][2]
-        indicator_val += alpha * t_val * linear_kernel(x_val, s)
+        indicator_val += alpha * t_val * kernel(x_val, s)
 
     indicator_val -= b_value
 
     return indicator_val
 
 
-def linear_kernel(x_vector, y_vector):
-    # linear kernel function for
-    scalar = np.dot(x_vector, y_vector)
+def kernel(x1, x2):
+    if option == 0:
+        return linear_kernel(x1, x2)
+    else:
+        if option == 1:
+            return polynomial_kernel(x1, x2, p)
+        else:
+            if option == 2:
+                return RBF_kernel(x1, x2, sigma)
+            else:
+                return linear_kernel(x1, x2)
+
+
+def linear_kernel(x1, x2):
+    scalar = np.dot(x1, x2)
     return scalar
 
 
-def polynomial_kernel(x_vector, y_vector, p):
-    # linear kernel function for
-    scalar = pow((np.dot(x_vector, y_vector) + 1), p)
+def polynomial_kernel(x1, x2, p):
+    scalar = pow((np.dot(x1, x2) + 1), p)
+    return scalar
+
+
+def RBF_kernel(x1, x2, sigma):
+    # Radial Basis Function kernel for
+    subs = x1-x2
+    xylength = np.linalg.norm(subs)
+    scalar = np.exp(- (pow(xylength, 2)) / (2 * pow(sigma, 2)))
+    print("RBF kernel test : ", scalar)
     return scalar
 
 
@@ -96,44 +111,25 @@ def zerofun(alpha_array):
     dot_product = np.dot(alpha_array, t_array)
     return dot_product
 
-    # TODO : Not needed to return boolean values. Only the scalar value
-    # if dot_product == 0:
-    #     for i in range(len(alpha_array)):
-    #         if alpha_array[i] > C:
-    #             return False
-    #         if alpha_array[i] < 0:
-    #             return False
-    #     return True
-    # else:
-    #     return False
-
 
 def calculate_b(s_vec, x_vec, t_s, slack, C):
 #compute b according to sum (ai ti K(s,xi) -ts
 #slack is boolean, true if slack is used, false otherwise
 
-    # print(len(x_vec))
+    result = 0
 
     if slack:
-        result = 0
         for i in range(len(x_vec)):
-            if 0 < x_vec[i][0] < C:
-                result += x_vec[i][0] * x_vec[i][1] * linear_kernel(s_vec, x_vec[i][2])
-            else:
-                print("alpha value is not acceptable")
-
-        result = result - t_s
-        # print("result of calculate_b (slack variables used):", result)
-        return result
+            if 0 <= x_vec[i][0] <= C:
+                result += x_vec[i][0] * x_vec[i][1] * kernel(s_vec, x_vec[i][2])
     else:
-        result = 0
+
         for i in range(len(x_vec)):
-                result += x_vec[i][0] * x_vec[i][1] * linear_kernel(s_vec, x_vec[i][2])
+                result += x_vec[i][0] * x_vec[i][1] * kernel(s_vec, x_vec[i][2])
 
-        result = result - t_s
-        # print("result of calculate_b (no slack variables used):", result)
+    result -= t_s
 
-        return result
+    return result
 
 
 def plot_generated_data(classA, classB):
@@ -150,22 +146,20 @@ def plot_generated_data(classA, classB):
     # plt.show()
 
 
-def main_method():
-    classA = np.concatenate(
-        (np.random.randn(10, 2) * 0.2 + [1.5, 0.5],
-         np.random.randn(10, 2) + 0.2 + [-1.5, 0.5])
+def generate_data():
+
+    class_a = np.concatenate(
+        (np.random.randn(int(N/4), 2) * 0.4 + [1.5, 0.5],
+         np.random.randn(int(N/4), 2) * 0.4 + [1, 1.5])
     )
 
-    classB = np.random.randn(20, 2) * 0.2 + [0.0, -0.5]
+    class_b = np.random.randn(int(N/2), 2) * 0.4 + [0.5, 0.80]
 
-    inputs = np.concatenate((classA, classB))
+    inputs = np.concatenate((class_a, class_b))
     targets = np.concatenate(
-        (np.ones(classA.shape[0]),
-         -np.ones(classB.shape[0]))
+        (np.ones(class_a.shape[0]),
+         -np.ones(class_b.shape[0]))
     )
-
-    global N
-    N = inputs.shape[0]
 
     permute = list(range(N))
     random.shuffle(permute)
@@ -178,81 +172,102 @@ def main_method():
     global data_points
     data_points = inputs
 
-    # print(inputs)
-
-#     For test purpose
-    plot_generated_data(classA, classB)
+    plot_generated_data(class_a, class_b)
 
 
-N = 0
-C = 10
+def plot_svm():
+    xgrid = np.linspace(-5, 5)
+    ygrid = np.linspace(-4, 4)
+
+    grid = np.array([[indicator_function(non_zero_alphas, b_value, [x, y])
+                      for x in xgrid]
+                     for y in ygrid])
+
+    plt.contour(xgrid, ygrid, grid,
+                (-1.0, 0.0, 1.0),
+                colors=('red', 'black', 'blue'),
+                linewidths=(1, 3, 1))
+
+    plt.show()
+
+
+def compute_mean_b_value():
+    global b_value, non_zero_alphas
+    b_sum = 0
+    for i in range(len(non_zero_alphas)):
+        b_value = calculate_b(non_zero_alphas[i][2],
+                              non_zero_alphas, non_zero_alphas[i][1], use_slack, C)
+        print("B val : " + str(b_value))
+        b_sum += b_value
+
+    b_value = b_sum / len(non_zero_alphas)
+
+    print("B mean " + str(b_value))
+
+    return b_value
+
+
+def compute_alphas():
+    global alphas
+    start = np.zeros(N)
+    B = [(0, C) for b in range(N)]
+    XC = {'type': 'eq', 'fun': zerofun}
+
+    ret = minimize(objective, start, bounds=B, constraints=XC)
+
+    alphas = ret['x']
+
+
+def main_method():
+
+    # np.random.seed(100)
+
+    print()
+
+    generate_data()
+    precompute_matrix_p()
+    compute_alphas()
+    extract_non_zero_alphas(alphas)
+    compute_mean_b_value()
+    plot_svm()
+
+
+# Instantiate empty structures
 t_array = np.array([])
 matrix_p = np.matrix([[]])
 data_points = np.array([])
+alphas = np.array([])
+non_zero_alphas = np.array([])
 
+# Instantiate parameters
+# Polynomial
+p = 2
+
+# Number of points
+N = 40
+
+# Do we use slack? If false, don't forget to change C to None
+use_slack = True
+
+# Slack value; if we don't want to set higher boundary, we make C equal to None
+C = 20
+
+# Sigma for RBF kernel
+sigma = 2
+
+# Type of kernel used
+# Where : 0 - linear; 1 - polynomial; 2 - RBF; else - linear
+option = 0
+
+# threshold for alphas
+threshold = pow(10, -5)
+
+b_value = 0
+
+# Method calls
 main_method()
-pre_compute_matrix_p()
 
 
-#TODO radial basis function kernel (RBF)
 
-# pre_compute_matrix_p()
-
-#print(matrix_p)
-
-start = np.zeros(N)
-B = [(0, C) for b in range(N)]
-XC = {'type': 'eq', 'fun': zerofun}
-
-# print(XC)
-ret = minimize(objective, start, bounds=B, constraints=XC)
-
-alphas = ret['x']
-
-non_zero_alphas = extract_non_zero_alphas(alphas)
-
-b_value = -100
-
-for i in range(len(non_zero_alphas)):
-
-    b_value = calculate_b(non_zero_alphas[i][2], non_zero_alphas, non_zero_alphas[i][1], False, C)
-    print(b_value)
-
-# Plotting the Decision Boundary
-
-xgrid = np.linspace(-5, 5)
-ygrid = np.linspace(-4, 4)
-
-grid = np.array([[indicator_function(non_zero_alphas, b_value, [x, y])
-                  for x in xgrid]
-                 for y in ygrid])
-
-plt.contour(xgrid, ygrid, grid,
-            (-1.0, 0.0, 1.0),
-            colors=('red', 'black', 'blue'),
-            linewidths=(1, 3, 1))
-
-plt.show()
-
-#test kernel functions
-#y = np.array([5, 3 , 1])
-#x = np.array([4, 2 , 6])
-#linear_kernel(x, y)
-
-#objective(alpha)
-
-#print("linear kernel function returns :", linear_kernel(x, y))
-
-#print("polynimial kernel function returns :", polynomial_kernel(x,y,2))
-
-#test calculate_b
-#calculate_b(alpha,t_array,s_vec,x_datapoints,t_s, True ,1)
-
-#pre-compute matrix P (call the function only once at the beginning)
-#pre_compute_matrix_p()
-
-
-#test zerofun
-#print("zerofun returns :",zerofun(x,y,8))
 
 
