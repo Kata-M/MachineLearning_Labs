@@ -135,25 +135,25 @@ def calculate_b(s_vec, x_vec, t_s, slack, C):
 def plot_generated_data(classA, classB):
     plt.plot([p[0] for p in classA],
              [p[1] for p in classA],
-             'b.')
+             'bo')
 
     plt.plot([p[0] for p in classB],
              [p[1] for p in classB],
-             'r.')
+             'ro')
 
     plt.axis('equal')
-    # plt.savefig('svmplot.pdf')
+
     # plt.show()
 
 
 def generate_data():
 
     class_a = np.concatenate(
-        (np.random.randn(int(N/4), 2) * 0.4 + [1.5, 0.5],
-         np.random.randn(int(N/4), 2) * 0.4 + [1, 1.5])
+        (np.random.randn(int(N/4), 2) * 0.6 + [1.5, 0.5],
+         np.random.randn(int(N/4), 2) * 0.6 + [2, 1.5])
     )
 
-    class_b = np.random.randn(int(N/2), 2) * 0.4 + [0.5, 0.80]
+    class_b = np.random.randn(int(N/2), 2) * 0.6 + [0.9, 0.80]
 
     inputs = np.concatenate((class_a, class_b))
     targets = np.concatenate(
@@ -187,6 +187,12 @@ def plot_svm():
                 (-1.0, 0.0, 1.0),
                 colors=('red', 'black', 'blue'),
                 linewidths=(1, 3, 1))
+
+    plt.plot([p[2][0] for p in non_zero_alphas],
+             [p[2][1] for p in non_zero_alphas],
+             'gx')
+
+    plt.savefig('svmplot.pdf')
 
     plt.show()
 
@@ -244,7 +250,7 @@ non_zero_alphas = np.array([])
 p = 2
 
 # Number of points
-N = 40
+N = 80
 
 # Do we use slack? If false, don't forget to change C to None
 use_slack = True
